@@ -16,35 +16,49 @@ class playscene extends Phaser.Scene {
     }
 
     create() {
-        this.cannon = this.add.rectangle(this.w*0.2, this.h*0.5, this.w*0.1, this.h*0.1);
+        this.needle = this.matter.add.image(50, 50, "needleimg");
+        this.cannon = this.add.rectangle(this.w*0.1, this.h*0.5, this.w*0.05, this.h*0.05);
         this.cannon.setFillStyle(0xFFFFFF);
-        this.needle = this.physics.add.sprite(this.cannon.x, this.cannon.y, "needleimg");
-        this.needle.angle = 90;
+        
+        //this.add.image(this.cannon.x, this.cannon.y, "needleimg");
+        this.needle.setFriction(0.05);
+        this.needle.setFrictionAir(0.0005);
+        this.needle.setBounce(0.9);
+        this.needle.angle = 0;
         this.cannon.depth = 1;
-        console.log(this.needle);
-        this.needle.disableBody(true, true);
+        //console.log(this.needle);
+        //this.needle.disableBody(true, true);
         this.input.on('pointerup',() =>{
-            this.needle.enableBody(true, this.cannon.x, this.cannon.y, true, true);
-            this.physics.velocityFromAngle(this.cannon.angle, 600, this.needle.body.velocity);
+            this.needle.x = this.cannon.x;
+            this.needle.y = this.cannon.y;
+            this.needle.angle = this.cannon.angle;
+            this.needle.setVelocity(0, 0);
+            this.matter.applyForceFromAngle(this.needle.body, 0.05, this.cannon.rotation);
+            //console.log(this.needle.x);
         });
     }
 
     update() {
         let {x,y,isDown} = this.input.activePointer;
-
+        this.cannon.rotation = Phaser.Math.Angle.BetweenPoints(this.cannon, this.input.activePointer);
+        let ang = this.needle.body.velocity;
+        //this.needle.setAngularVelocity(10);
+        //console.log(this.needle.body.velocity.y);
+        this.needle.rotation = new Phaser.Math.Vector2(ang.x, ang.y).angle()+(Math.PI/2);
+        
     }
 }
 const config = {
     type: Phaser.AUTO,
-    width: 640,
-    height: 512,
+    width: 1040,
+    height: 612,
     physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 300 }
+        default: 'matter',
+        matter: {
+            debug:true
         }
     },
-    backgroundColor: 0x000000,
+    backgroundColor: 0xbbbbbb,
     scene: playscene
 };
 const game = new Phaser.Game(config);
