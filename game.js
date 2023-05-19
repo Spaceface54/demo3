@@ -6,7 +6,7 @@ class playscene extends Phaser.Scene {
     constructor(){
         super("playscene");
         this.cannon;
-        this.needle;
+        this.needle = [];
         this.w;
         this.h;
         this.s;
@@ -23,27 +23,42 @@ class playscene extends Phaser.Scene {
     }
 
     create() {
-        this.needle = this.matter.add.image(0, this.h, "needleimg");
+        
         this.cannon = this.add.rectangle(this.w*0.1, this.h*0.7, this.w*0.05, this.h*0.05);
         this.cannon.setFillStyle(0xFFFFFF);
         
         //this.add.image(this.cannon.x, this.cannon.y, "needleimg");
-        this.needle.setFriction(0.05);
-        this.needle.setFrictionAir(0.0005);
-        this.needle.setBounce(0.9);
-        this.needle.angle = 0;
         this.cannon.depth = 1;
         //console.log(this.needle);
         //this.needle.disableBody(true, true);
-        this.input.on('pointerup',(pointer) =>{
-            this.needle.x = this.cannon.x;
-            this.needle.y = this.cannon.y;
-            this.needle.angle = this.cannon.angle;
-            this.needle.setVelocity(0, 0);
-            let a = Math.abs(this.cannon.x - pointer.x);
-            let b = Math.abs(this.cannon.y - pointer.y);
-            this.matter.applyForceFromAngle(this.needle.body, 0.05/(((this.w*0.7))/(Math.sqrt(a*a + b+b)+(this.w*0.2))), this.cannon.rotation);
-            //console.log(this.needle.x);
+        this.time.addEvent({
+            delay: 100,
+            loop: false,
+            callback: () =>{
+                this.input.on('pointerdown',(pointer) =>{
+                    let tempneedle = this.matter.add.image(0, this.h, "needleimg");
+                    tempneedle.setFriction(0.05);
+                    tempneedle.setFrictionAir(0.0005);
+                    tempneedle.setBounce(0.9);
+                    tempneedle.angle = 0;
+                    tempneedle.x = this.cannon.x;
+                    tempneedle.y = this.cannon.y;
+                    tempneedle.angle = this.cannon.angle;
+                    tempneedle.setVelocity(0, 0);
+                    let a = Math.abs(this.cannon.x - pointer.x);
+                    let b = Math.abs(this.cannon.y - pointer.y);
+                    this.matter.applyForceFromAngle(tempneedle.body, 0.05/(((this.w*0.7))/(Math.sqrt(a*a + b+b)+(this.w*0.2))), this.cannon.rotation);
+                    this.needle.push(tempneedle);
+                    this.time.addEvent({
+                        delay: 5000,
+                        loop: false,
+                        callback: () =>{
+                            this.needle.splice(this.needle.indexOf(tempneedle), 1);
+                            tempneedle.destroy()
+                        }
+                    });
+                });
+            }
         });
 
         //level 1
@@ -53,6 +68,7 @@ class playscene extends Phaser.Scene {
             this.matter.world.on('collisionstart', (event, bodyA, bodyB) =>
             {
                 if(bodyA == ballon.body || bodyB == ballon.body){
+                    this.needle = [];
                     this.scene.start("winscreen", {
                         levelnum:2
                     });
@@ -97,6 +113,7 @@ class playscene extends Phaser.Scene {
                     ballon2.destroy();
                 }
                 if(wincounter == 2){
+                    this.needle = [];
                     wincounter++;
                     this.scene.start("winscreen", {
                         levelnum:3
@@ -111,13 +128,15 @@ class playscene extends Phaser.Scene {
     }
 
     update() {
-        let {x,y,isDown} = this.input.activePointer;
+        //let {x,y,isDown} = this.input.activePointer;
         this.cannon.rotation = Phaser.Math.Angle.BetweenPoints(this.cannon, this.input.activePointer);
-        let ang = this.needle.body.velocity;
-        //this.needle.setAngularVelocity(10);
-        //console.log(this.needle.body.velocity.y);
-        this.needle.rotation = new Phaser.Math.Vector2(ang.x, ang.y).angle()+(Math.PI/2);
-        
+        if(this.needle[0] != undefined && this.needle[0].scene != undefined){
+            //console.log(this.needle.length);
+            for(let i = 0; i<this.needle.length; i++){
+                let ang = this.needle[i].body.velocity;
+                this.needle[i].rotation = new Phaser.Math.Vector2(ang.x, ang.y).angle()+(Math.PI/2);
+            }
+        }
     }
 }
 
