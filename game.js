@@ -1,6 +1,6 @@
 class playscene extends Phaser.Scene {
     init(data) {
-        this.levelnum = data.levelnum || 3;
+        this.levelnum = data.levelnum || 1;
     }
 
     constructor(){
@@ -127,7 +127,7 @@ class playscene extends Phaser.Scene {
 
         if(this.levelnum == 3){
             
-            let magnet1 = this.matter.add.image(this.w*0.5, this.h*0.5, "ballon", null, {
+            let magnet1 = this.matter.add.image(this.w*0.5, this.h*0.3, "ballon", null, {
                 isStatic: true, 
                 shape:"circle",
                 plugin: {
@@ -139,9 +139,71 @@ class playscene extends Phaser.Scene {
                     ]
                 }
             });
-            magnet1.setScale(0.1, 0.1);
 
+            let magnet2 = this.matter.add.image(this.w*0.7, this.h*0.85, "ballon", null, {
+                isStatic: true, 
+                shape:"circle",
+                plugin: {
+                    attractors: [
+                        (bodyA, bodyB) => ({
+                            x: ((bodyA.position.x - bodyB.position.x)* (this.dist(bodyA.position.x, bodyB.position.x, bodyA.position.y, bodyB.position.y)> (this.w*0.15) ? 0 : 1)) * 0.00003,
+                            y: ((bodyA.position.y - bodyB.position.y)* (this.dist(bodyA.position.x, bodyB.position.x, bodyA.position.y, bodyB.position.y)> (this.w*0.15) ? 0 : 1)) * 0.00003
+                        })
+                    ]
+                }
+            });
+
+            let box1 = this.matter.add.image(this.w*0.4, this.h*0.3, "box", null, {isStatic: true});
+            let box2 = this.matter.add.image(this.w*0.6, this.h*0.65, "box", null, {isStatic: true});
+            let box3 = this.matter.add.image(this.w*0.9, this.h*0.85, "box", null, {isStatic: true});
+            let box4 = this.matter.add.image(this.w*0.2, this.h*0.4, "box", null, {isStatic: true});
+
+            let ballon1 = this.matter.add.image(this.w*0.2, this.h*0.1, "ballon", null, {isStatic: true, shape:"circle"});
+            let ballon2 = this.matter.add.image(this.w*0.8, this.h*0.6, "ballon", null, {isStatic: true, shape:"circle"});
+
+            box1.setScale(0.4, 2.5);
+            box2.setScale(0.4, 2);
+            box3.setScale(0.4, 2.5);
+            box4.setScale(0.4, 3.5);
+
+            box2.angle = 45;
+            box4.angle = 90;
+
+            magnet1.setScale(0.1, 0.1);
             magnet1.setTint(0x000000);
+
+            magnet2.setScale(0.1, 0.1);
+            magnet2.setTint(0x000000);
+
+            this.tweens.add({
+                targets: magnet2,
+                alpha:1,
+                y:this.h*0.7,
+                duration: 2000,
+                ease: "Sine.easeOut",
+                repeat: -1,
+                yoyo:true
+            });
+
+            let wincounter = 0;
+            this.matter.world.on('collisionstart', (event, bodyA, bodyB) =>
+            {
+                if(bodyA == ballon1.body || bodyB == ballon1.body){
+                    wincounter++;
+                    ballon1.destroy()
+                }
+                if(bodyA == ballon2.body || bodyB == ballon2.body){
+                    wincounter++;
+                    ballon2.destroy();
+                }
+                if(wincounter == 2){
+                    this.needle = [];
+                    this.scene.start("winscreen", {
+                        levelnum:4
+                    });
+                }
+
+            });
 
         }
         
@@ -175,14 +237,23 @@ class winscreen extends Phaser.Scene {
         super('winscreen');
     }
     create() {
-
         this.add.text(50, 50, "Congradulations on beating level "+ (this.levelnum-1) +"!").setFontSize(40);
-        this.add.text(50, 100, "Click anywhere to continue").setFontSize(20);
-        this.input.on('pointerdown', () => {
+        if(this.levelnum != 4){
+            this.add.text(50, 100, "Click anywhere to continue").setFontSize(20);
+            this.input.on('pointerdown', () => {
             this.scene.start("playscene", {
-                levelnum:this.levelnum
+                    levelnum:this.levelnum
+                });
             });
-        });
+        }
+        else{
+            this.add.text(50, 100, "Click anywhere to restart").setFontSize(20);
+            this.input.on('pointerdown', () => {
+            this.scene.start("playscene", {
+                    levelnum:1
+                });
+            });
+        }
     }
 }
 const config = {
@@ -192,7 +263,7 @@ const config = {
     physics: {
         default: 'matter',
         matter: {
-            debug:true,
+            //debug:true,
             plugins: {
                 attractors:true
             }
