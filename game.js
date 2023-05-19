@@ -1,6 +1,6 @@
 class playscene extends Phaser.Scene {
     init(data) {
-        this.levelnum = data.levelnum;
+        this.levelnum = data.levelnum || 1;
     }
 
     constructor(){
@@ -47,29 +47,65 @@ class playscene extends Phaser.Scene {
         });
 
         //level 1
+        if(this.levelnum == 1){
+            let box = this.matter.add.image(this.w*0.5, this.h*0.7, "box", null, {isStatic: true});
+            let ballon = this.matter.add.image(this.w*0.7, this.h*0.3, "ballon", null, {isStatic: true, shape:"circle"});
+            this.matter.world.on('collisionstart', (event, bodyA, bodyB) =>
+            {
+                if(bodyA == ballon.body || bodyB == ballon.body){
+                    this.scene.start("winscreen", {
+                        levelnum:2
+                    });
+                }
 
-        let box = this.matter.add.image(this.w*0.5, this.h*0.7, "box", null, {isStatic: true});
-        let ballon = this.matter.add.image(this.w*0.7, this.h*0.3, "ballon", null, {isStatic: true, shape:"circle"});
-        this.matter.world.on('collisionstart', (event, bodyA, bodyB) =>
-        {
-            if(bodyA == ballon.body || bodyB == ballon.body){
-                this.scene.start("winscreen", {
-                    levelnum:2
-                });
-            }
+            });
+            box.setScale(1, 3.6);
 
-        });
-        box.setScale(1, 3.6);
+            this.tweens.add({
+                targets: ballon,
+                alpha:1,
+                y:this.h*0.5,
+                duration: 2000,
+                ease: "Sine.easeOut",
+                repeat: -1,
+                yoyo:true
+            });
+        }
+        //level 2
+        if(this.levelnum == 2){
+            let box1 = this.matter.add.image(this.w*0.5, this.h*0.3, "box", null, {isStatic: true});
+            let box2 = this.matter.add.image(this.w*0.5, this.h*0.7, "box", null, {isStatic: true});
 
-        this.tweens.add({
-            targets: ballon,
-            alpha:1,
-            y:this.h*0.5,
-            duration: 2000,
-            ease: "Sine.easeOut",
-            repeat: -1,
-            yoyo:true
-        });
+            let ballon1 = this.matter.add.image(this.w*0.4, this.h*0.2, "ballon", null, {isStatic: true, shape:"circle"});
+            let ballon2 = this.matter.add.image(this.w*0.8, this.h*0.4, "ballon", null, {isStatic: true, shape:"circle"});
+
+
+            box1.setScale(0.4, 3.2);
+            box2.setScale(0.4, 3.3);
+            box1.angle = 45;
+            box2.angle = 45;
+
+            let wincounter = 0;
+            this.matter.world.on('collisionstart', (event, bodyA, bodyB) =>
+            {
+                if(bodyA == ballon1.body || bodyB == ballon1.body){
+                    wincounter++;
+                    ballon1.destroy()
+                }
+                if(bodyA == ballon2.body || bodyB == ballon2.body){
+                    wincounter++;
+                    ballon2.destroy();
+                }
+                if(wincounter == 2){
+                    wincounter++;
+                    this.scene.start("winscreen", {
+                        levelnum:3
+                    });
+                }
+
+            });
+        }
+        
 
 
     }
@@ -94,7 +130,7 @@ class winscreen extends Phaser.Scene {
     }
     create() {
 
-        this.add.text(50, 50, "Congradulations on beating level 1!").setFontSize(40);
+        this.add.text(50, 50, "Congradulations on beating level "+ (this.levelnum-1) +"!").setFontSize(40);
         this.add.text(50, 100, "Click anywhere to continue").setFontSize(20);
         this.input.on('pointerdown', () => {
             this.scene.start("playscene", {
