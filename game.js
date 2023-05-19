@@ -1,6 +1,6 @@
 class playscene extends Phaser.Scene {
     init(data) {
-        this.levelnum = data.levelnum || 1;
+        this.levelnum = data.levelnum || 3;
     }
 
     constructor(){
@@ -47,7 +47,7 @@ class playscene extends Phaser.Scene {
                     tempneedle.setVelocity(0, 0);
                     let a = Math.abs(this.cannon.x - pointer.x);
                     let b = Math.abs(this.cannon.y - pointer.y);
-                    this.matter.applyForceFromAngle(tempneedle.body, 0.05/(((this.w*0.7))/(Math.sqrt(a*a + b+b)+(this.w*0.2))), this.cannon.rotation);
+                    this.matter.applyForceFromAngle(tempneedle.body, 0.05/(((this.w*0.7))/(Math.sqrt(a*a + b*b)+(this.w*0.2))), this.cannon.rotation);
                     this.needle.push(tempneedle);
                     this.time.addEvent({
                         delay: 5000,
@@ -122,6 +122,28 @@ class playscene extends Phaser.Scene {
 
             });
         }
+
+        //level 3
+
+        if(this.levelnum == 3){
+            
+            let magnet1 = this.matter.add.image(this.w*0.5, this.h*0.5, "ballon", null, {
+                isStatic: true, 
+                shape:"circle",
+                plugin: {
+                    attractors: [
+                        (bodyA, bodyB) => ({
+                            x: ((bodyA.position.x - bodyB.position.x)* (this.dist(bodyA.position.x, bodyB.position.x, bodyA.position.y, bodyB.position.y)> (this.w*0.15) ? 0 : 1)) * 0.00003,
+                            y: ((bodyA.position.y - bodyB.position.y)* (this.dist(bodyA.position.x, bodyB.position.x, bodyA.position.y, bodyB.position.y)> (this.w*0.15) ? 0 : 1)) * 0.00003
+                        })
+                    ]
+                }
+            });
+            magnet1.setScale(0.1, 0.1);
+
+            magnet1.setTint(0x000000);
+
+        }
         
 
 
@@ -137,6 +159,11 @@ class playscene extends Phaser.Scene {
                 this.needle[i].rotation = new Phaser.Math.Vector2(ang.x, ang.y).angle()+(Math.PI/2);
             }
         }
+    }
+    dist(x1, x2, y1, y2){
+        let a = Math.abs(x1 - x2);
+        let b = Math.abs(y1 - y2);
+        return Math.sqrt(a*a + b*b);
     }
 }
 
@@ -165,7 +192,10 @@ const config = {
     physics: {
         default: 'matter',
         matter: {
-            debug:true
+            debug:true,
+            plugins: {
+                attractors:true
+            }
         }
     },
     backgroundColor: 0xbbbbbb,
